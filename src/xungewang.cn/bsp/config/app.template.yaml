@@ -1,0 +1,39 @@
+# This file serves as a *template*. You can safely copy and change config
+# and pass to the executable via -c option. In addition, this config file
+# should be put in a directory, typically named 'config', like below:
+#
+#    (some dir)
+#       \-- config           -- the config folder. the '-c' option points here
+#             +-- app.yaml   -- note, it's not app.template.yaml
+#
+# All configuration defined here can be overridden by environment
+# variables prefixing with 'BSP_' plus upper-cased config name. For example,
+# 'http_server_addr' can be overridden by 'BSP_HTTP_SERVER_ADDR'.
+#
+
+# The http server port, default to :8000
+#http_server_addr: :8000
+
+# log level, can be one of "debug", "info" (default), "warn", "fatal", and "panic"
+#log_level: info
+
+# datasource name (driver is fixed as postgres, so this gonna be DSN for postgres)
+db_dsn: host=dev.laiweilai.com port=5432 dbname=gprs_location user=postgres password=lwl1@3$5^7* sslmode=disable
+
+# the maximum number of open connections to the database.
+# If db_max_idle_conns is greater than 0 and the new db_max_open_conns is less than
+# db_max_idle_conns, then db_max_idle_conns will be reduced to match the new db_max_open_conns limit
+# If db_max_open_conns <= 0, then there is no limit on the number of open connections.
+# The default is 0 (unlimited).
+#db_max_open_conns: 0
+
+# sets the maximum number of connections in the idle connection pool.
+# If db_max_open_conns is greater than 0 but less than the new db_max_idle_conns then the
+# new db_max_idle_conns will be reduced to match the db_max_open_conns limit.
+# If db_max_idle_conns <= 0, no idle connections are retained. The default is 0.
+#db_max_idle_conns: 0
+
+# sets the maximum amount of time(in second) a connection may be reused. Expired connections may be
+# closed lazily before reuse. If db_conn_max_lifetime <= 0, connections are reused forever.
+# The default is 0.
+#db_conn_max_lifetime: 0
