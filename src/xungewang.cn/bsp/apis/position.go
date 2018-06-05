@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-ozzo/ozzo-dbx"
 	"github.com/go-ozzo/ozzo-routing"
@@ -56,6 +57,11 @@ func (request *PositionRequest) Validate() error {
 	return nil
 }
 
+// append given signal to current request
+func (request *PositionRequest) append(signal Signal) {
+	*request = append(*request, signal)
+}
+
 type Signal struct {
 	// Mobile Network Code
 	Mnc string `json:"mnc"`
@@ -87,13 +93,25 @@ func (signal *Signal) String() string {
 	return fmt.Sprintf("(lac:%s, cid:%s, str:%f)", signal.Lac, signal.Cid, signal.Strength)
 }
 
-func (r *positionResource) computePosition(ctx *routing.Context) error {
-	var request *PositionRequest
-	if err := ctx.Read(&request); err != nil {
-		if v := ctx.Request.Header.Get("Content-Type"); !strings.HasPrefix(v, "application/json") {
-			return errors.SimpleInvalidData(fmt.Sprintf("request not acceptable. given Content-Type is %s", v))
-		}
+// request extractor to extract request data from context
+type extractRequest func(ctx *routing.Context, request *PositionRequest) error
 
+func (r *positionResource) computePosition(ctx *routing.Context) error {
+	// read request data from context
+	var request *PositionRequest
+
+	// manual content negotiation
+	mime := ctx.Request.Header.Get("Content-Type")
+	var extract extractRequest
+	if strings.HasPrefix(mime, "application/json") { // body as JSON
+		extract = r.extractRequestFromJSON
+	} else { // treat as form submission
+		request = &PositionRequest{} // no reflect, so we create it by hand
+		extract = r.extractRequestFromForm
+	}
+
+	// extract request data
+	if err := extract(ctx, request); err != nil {
 		return errors.SimpleInvalidData("request not acceptable. pay special attention on fields type and value. For " +
 			"example, mnc, lac and cid should be of string type, and str double.")
 	}
@@ -109,6 +127,32 @@ func (r *positionResource) computePosition(ctx *routing.Context) error {
 	}
 }
 
+func (r *positionResource) extractRequestFromJSON(ctx *routing.Context, request *PositionRequest) error {
+	return ctx.Read(&request)
+}
+
+func (r *positionResource) extractRequestFromForm(ctx *routing.Context, request *PositionRequest) error {
+	if err := ctx.Request.ParseForm(); err != nil {
+		return err
+	}
+
+	if signals := ctx.Request.Form["signal"]; len(signals) > 0 {
+		for _, signal := range signals {
+			// parse signal from each text representation
+			var parsed Signal
+			if err := json.NewDecoder(strings.NewReader(signal)).Decode(&parsed); err != nil {
+				return err
+			}
+
+			request.append(parsed)
+		}
+
+		return nil
+	}
+
+	return errors.SimpleInvalidData("no param given")
+}
+
 func (position *PositionResult) String() string {
 	return fmt.Sprintf("(lat: %f, lng: %f)", position.Lat, position.Lng)
 }
@@ -116,4 +160,3 @@ func (position *PositionResult) String() string {
 func NewPositionResult(lat float64, lng float64) *PositionResult {
 	return &PositionResult{lat, lng}
 }
-
