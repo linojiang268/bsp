@@ -98,7 +98,7 @@ type extractRequest func(ctx *routing.Context, request *PositionRequest) error
 
 func (r *positionResource) computePosition(ctx *routing.Context) error {
 	// read request data from context
-	var request *PositionRequest
+	request := &PositionRequest{} // no reflect, so we create it by hand
 
 	// manual content negotiation
 	mime := ctx.Request.Header.Get("Content-Type")
@@ -106,7 +106,6 @@ func (r *positionResource) computePosition(ctx *routing.Context) error {
 	if strings.HasPrefix(mime, "application/json") { // body as JSON
 		extract = r.extractRequestFromJSON
 	} else { // treat as form submission
-		request = &PositionRequest{} // no reflect, so we create it by hand
 		extract = r.extractRequestFromForm
 	}
 
