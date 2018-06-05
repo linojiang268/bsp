@@ -19,6 +19,7 @@ type (
 	}
 
 	PositionResult struct {
+		Code int    `json:"code"`
 		Lat float64 `json:"lat"`
 		Lng float64 `json:"lng"`
 	}
@@ -157,5 +158,5 @@ func (position *PositionResult) String() string {
 }
 
 func NewPositionResult(lat float64, lng float64) *PositionResult {
-	return &PositionResult{lat, lng}
+	return &PositionResult{200, lat, lng}
 }
